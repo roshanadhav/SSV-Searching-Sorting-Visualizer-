@@ -1,10 +1,13 @@
 import React from 'react'
 import './App.css' ; 
+import { Route , Routes} from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import SelectionSort from './pages/SelectionSort';
 export default function App() {
   return (
-    <div>
-
-      HelloWorld
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage/>} />
+      <Route path="/selection-sort" element={<SelectionSort/>} />
+    </Routes>
   )
 }
