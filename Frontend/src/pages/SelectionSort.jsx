@@ -5,7 +5,8 @@ import "./SelectionSort.css";
 export default function SelectionSort() {
   const [arr, setArr] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [activeTab, setActiveTab] = useState("java"); // default tab
+  const [activeTab, setActiveTab] = useState("java"); 
+  const [barStates, setBarStates] = useState({}); // track bar status for animations
 
   const handleChange = (e) => {
     setInputValue(e.target.value);
@@ -13,14 +14,56 @@ export default function SelectionSort() {
 
   const sort = (array) => {
     let sortedArr = [...array];
+    let delay = 800; // ms
+    let steps = [];
+
     for (let i = 0; i < sortedArr.length; i++) {
       let min = i;
       for (let j = i + 1; j < sortedArr.length; j++) {
-        if (sortedArr[j] < sortedArr[min]) min = j;
+        steps.push({ type: "compare", indices: [i, j] });
+        if (sortedArr[j] < sortedArr[min]) {
+          min = j;
+        }
       }
-      [sortedArr[i], sortedArr[min]] = [sortedArr[min], sortedArr[i]];
+      if (min !== i) {
+        steps.push({ type: "swap", indices: [i, min] });
+        [sortedArr[i], sortedArr[min]] = [sortedArr[min], sortedArr[i]];
+      }
+      steps.push({ type: "sorted", index: i });
     }
-    return sortedArr;
+
+    // Animate steps
+    
+    steps.forEach((step, idx) => {
+      setTimeout(() => {
+        if (step.type === "compare") {
+          setBarStates((prev) => ({
+            ...prev, //spred [1,2,4 , ...arr2] , arr2 = [5 , 6 , 7]
+            [step.indices[0]]: "comparing",
+            [step.indices[1]]: "comparing",
+          }));
+        } else if (step.type === "swap") {
+          setBarStates((prev) => ({
+            ...prev,
+            [step.indices[0]]: "swapping",
+            [step.indices[1]]: "swapping",
+          }));
+          setArr((arr) => {
+            let newArr = [...arr];
+            [newArr[step.indices[0]], newArr[step.indices[1]]] = [
+              newArr[step.indices[1]],
+              newArr[step.indices[0]],
+            ];
+            return newArr;
+          });
+        } else if (step.type === "sorted") {
+          setBarStates((prev) => ({
+            ...prev,
+            [step.index]: "sorted",
+          }));
+        }
+      }, idx * delay);
+    });
   };
 
   const handleSubmit = (e) => {
@@ -29,8 +72,13 @@ export default function SelectionSort() {
       .split(",")
       .map((num) => parseInt(num.trim()))
       .filter((num) => !isNaN(num));
-    let sorted = sort(numbers);
-    setArr(sorted);
+
+    setArr(numbers);
+    setBarStates({});
+
+    setTimeout(() => {
+      sort(numbers);
+    }, 1000);
   };
 
   // Code Snippets
@@ -90,13 +138,19 @@ void selectionSort(int arr[], int n) {
         <button type="submit">Sort</button>
       </form>
 
-      {/* Sorted Array */}
+      {/* Array Display */}
       {arr.length > 0 && (
         <div className="array-card">
-          <h3>Sorted Array:</h3>
+          <h3>Array Visualization:</h3>
           <div className="array-display">
             {arr.map((num, idx) => (
-              <span key={idx} className="array-element">{num}</span>
+              <span
+                key={idx}
+                style={{ height: 20 + num * 20 }}
+                className={`array-element ${barStates[idx] || ""}`}
+              >
+                {num}
+              </span>
             ))}
           </div>
         </div>
